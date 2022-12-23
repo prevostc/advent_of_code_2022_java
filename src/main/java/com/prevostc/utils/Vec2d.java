@@ -78,4 +78,8 @@ public record Vec2d(int x, int y) {
             throw new IllegalArgumentException("No straight line to " + other + " from " + this);
         }
     }
+
+    public int manhattanDistance(Vec2d other) {
+        return Math.abs(other.x - this.x) + Math.abs(other.y - this.y);
+    }
 }

@@ -1,6 +1,7 @@
 package com.prevostc.utils;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class StreamUtil {
     @FunctionalInterface
@@ -17,4 +18,5 @@ public class StreamUtil {
             }
         };
     }
+
 }
