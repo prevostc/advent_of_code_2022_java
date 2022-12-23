@@ -5,7 +5,7 @@ import java.util.stream.IntStream;
 
 import lombok.val;
 
-public record Vec2d(int x, int y) {
+public record Vec2d(int x, int y) implements Cloneable {
 
     public static Vec2d fromString(String coords, String sep) {
         val coordsArray = coords.split(sep);

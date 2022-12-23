@@ -1,5 +1,7 @@
 package com.prevostc.utils;
 
+import lombok.val;
+
 public class Grid2d<T> {
     private int width;
     private int height;
@@ -44,6 +46,10 @@ public class Grid2d<T> {
         return get(new Vec2d(x, y));
     }
 
+    public Vec2d topLeft() {
+        return printScope[0];
+    }
+
     public Vec2d bottomRight() {
         return printScope[1];
     }
@@ -61,8 +67,8 @@ public class Grid2d<T> {
         var sb = new StringBuilder();
         sb.append("========================================").append("\n");
         sb.append("Grid2d (").append(width).append("x").append(height).append(')').append("\n");
-        for (int y = this.printScope[0].y(); y <= this.printScope[1].y(); y++) {
-            for (int x = this.printScope[0].x(); x <= this.printScope[1].x(); x++) {
+        for (int y = this.topLeft().y(); y <= this.bottomRight().y(); y++) {
+            for (int x = this.topLeft().x(); x <= this.bottomRight().x(); x++) {
                 var value = this.get(x, y);
                 if (value == null) {
                     sb.append(this.empty);
