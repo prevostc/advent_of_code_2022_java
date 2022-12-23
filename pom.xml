@@ -39,8 +39,6 @@
       <version>2.0.2-beta</version>
       <scope>test</scope>
     </dependency>
-
-
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>

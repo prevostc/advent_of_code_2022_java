@@ -21,7 +21,7 @@ public class Day14Test {
     public void testPart1Main() throws IOException {
         val day = new Day14();
         val answer = day.part1("day14/input.txt");
-        System.out.println("Day 14 - Part 1: " + answer);
+        System.out.println("Day14 - Part 1: " + answer);
     }
 
     @Test
@@ -35,6 +35,6 @@ public class Day14Test {
     public void testPart2Main() throws IOException {
         val day = new Day14();
         val answer = day.part2("day14/input.txt");
-        System.out.println("Day 13 - Part 2: " + answer);
+        System.out.println("Day14 - Part 2: " + answer);
     }
 }
