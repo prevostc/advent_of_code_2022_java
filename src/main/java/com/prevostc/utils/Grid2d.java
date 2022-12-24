@@ -1,9 +1,12 @@
 package com.prevostc.utils;
 
+import lombok.Getter;
 import lombok.val;
 
 public class Grid2d<T> {
+    @Getter
     private int width;
+    @Getter
     private int height;
     private T[] data;
     private Vec2d[] printScope;
