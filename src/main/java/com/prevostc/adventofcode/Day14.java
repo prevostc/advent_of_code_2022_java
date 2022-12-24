@@ -66,7 +66,7 @@ public class Day14 {
 
     public Grid2d<Rock> parse(String inputFilePath) throws IOException {
         val grid = new Grid2d<Rock>(1000, 1000, Rock.EMPTY);
-        val lines = fileReader.readTestLines(inputFilePath);
+        val lines = fileReader.readAllLines(inputFilePath);
 
         // parse input into a grid
         for (val line : lines) {

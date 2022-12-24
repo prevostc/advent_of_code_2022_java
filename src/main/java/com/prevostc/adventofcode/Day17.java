@@ -119,7 +119,7 @@ public class Day17 {
     }
 
     public Integer part1(String inputFilePath) throws IOException {
-        LoopingList<String> jetPattern = new LoopingList(fileReader.readTestLines(inputFilePath)
+        LoopingList<String> jetPattern = new LoopingList(fileReader.readAllLines(inputFilePath)
                 .get(0).chars().mapToObj(c -> Character.toString(c)).collect(Collectors.toList()));
 
         val gridWidth = 7;
@@ -139,7 +139,7 @@ public class Day17 {
     }
 
     public BigInteger part2(String inputFilePath) throws IOException {
-        LoopingList<String> jetPattern = new LoopingList(fileReader.readTestLines(inputFilePath)
+        LoopingList<String> jetPattern = new LoopingList(fileReader.readAllLines(inputFilePath)
                 .get(0).chars().mapToObj(c -> Character.toString(c)).collect(Collectors.toList()));
 
         // same as 1, but we look for a pattern since we can't compute all the way up

@@ -13,7 +13,7 @@ public class Day18 {
     FileReader fileReader = new FileReader();
 
     private Set<Vec3d> parse(String inputFilePath) throws IOException {
-        return fileReader.readTestLines(inputFilePath).stream()
+        return fileReader.readAllLines(inputFilePath).stream()
                 .map(s -> s.split(","))
                 .map(p -> new Vec3d(Integer.parseInt(p[0]), Integer.parseInt(p[1]), Integer.parseInt(p[2])))
                 .collect(Collectors.toSet());

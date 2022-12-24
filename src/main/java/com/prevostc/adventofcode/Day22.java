@@ -77,7 +77,7 @@ public class Day22 {
     }
 
     private void parse(String inputFilePath) throws IOException {
-        val lines = fileReader.readTestLines(inputFilePath);
+        val lines = fileReader.readAllLines(inputFilePath);
         val mapLines = lines.subList(0, lines.size() - 2);
         val width = mapLines.stream().map(String::length).max(Integer::compareTo).orElseThrow();
 

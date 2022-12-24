@@ -213,7 +213,7 @@ public class Day16 {
 
     private Graph parseInput(String inputFilePath) throws IOException {
         var g = new Graph();
-        fileReader.readTestLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
+        fileReader.readAllLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
                 .forEach(m -> {

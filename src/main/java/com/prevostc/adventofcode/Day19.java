@@ -198,7 +198,7 @@ public class Day19 {
                     "Blueprint (\\d+): Each ore robot costs (\\d+) ore. Each clay robot costs (\\d+) ore. Each obsidian robot costs (\\d+) ore and (\\d+) clay. Each geode robot costs (\\d+) ore and (\\d+) obsidian.");
 
     private List<Blueprint> parse(String inputFilePath) throws IOException {
-        return fileReader.readTestLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
+        return fileReader.readAllLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
                 .map(m -> {

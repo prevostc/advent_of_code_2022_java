@@ -18,7 +18,7 @@ public class Day13 {
     FileReader fileReader = new FileReader();
 
     public Integer part1(String inputFilePath) throws IOException {
-        val lines = fileReader.readTestLines(inputFilePath);
+        val lines = fileReader.readAllLines(inputFilePath);
         ObjectMapper mapper = new ObjectMapper();
         int ans = 0;
         int pairIdx = 1;
@@ -36,7 +36,7 @@ public class Day13 {
     }
 
     public Integer part2(String inputFilePath) throws IOException {
-        val lines = fileReader.readTestLines(inputFilePath);
+        val lines = fileReader.readAllLines(inputFilePath);
         val dividers = List.of("[[2]]", "[[6]]");
         dividers.stream().forEach(lines::add);
 

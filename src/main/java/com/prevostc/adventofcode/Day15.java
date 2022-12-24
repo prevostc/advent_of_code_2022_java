@@ -93,7 +93,7 @@ public class Day15 {
             .compile("Sensor at x=(-?\\d+), y=(-?\\d+): closest beacon is at x=(-?\\d+), y=(-?\\d+)");
 
     public List<Sensor> getSensors(String inputFilePath) throws IOException {
-        return fileReader.readTestLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
+        return fileReader.readAllLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
                 .map(m -> new Sensor(new Vec2d(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))),
@@ -102,7 +102,7 @@ public class Day15 {
     }
 
     public List<Vec2d> getBeacons(String inputFilePath) throws IOException {
-        return fileReader.readTestLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
+        return fileReader.readAllLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
                 .map(m -> new Vec2d(Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4))))

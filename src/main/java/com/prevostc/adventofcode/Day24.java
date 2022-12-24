@@ -95,7 +95,7 @@ public class Day24 {
     FileReader fileReader = new FileReader();
 
     private void parse(String inputFilePath) throws IOException {
-        val lines = fileReader.readTestLines(inputFilePath);
+        val lines = fileReader.readAllLines(inputFilePath);
         this.dimensions = new Vec2d(lines.get(0).length() - 2, lines.size() - 2);
         this.target = this.dimensions.add(new Vec2d(-1, 0));
         this.initialPosition = new Vec2d(0, -1);

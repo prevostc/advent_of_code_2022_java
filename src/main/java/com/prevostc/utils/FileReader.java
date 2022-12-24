@@ -8,7 +8,7 @@ import java.util.List;
 import lombok.val;
 
 public class FileReader {
-    public List<String> readTestLines(String path) throws IOException {
+    public List<String> readAllLines(String path) throws IOException {
         val classLoader = getClass().getClassLoader();
         return Files.readAllLines(Paths.get(classLoader.getResource(path).getFile()));
     }
