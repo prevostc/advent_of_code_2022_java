@@ -28,7 +28,7 @@ public class Day19Test {
     public void testPart2Example() throws IOException {
         val day = new Day19();
         val answer = day.part2("day19/example.txt");
-        assertEquals(58, answer);
+        assertEquals(3472, answer);
     }
 
     @Test

@@ -3,8 +3,9 @@ package com.prevostc.adventofcode;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.prevostc.utils.FileReader;
 import com.prevostc.utils.Vec2d;
@@ -15,7 +16,7 @@ public class Day24 {
 
     private Vec2d dimensions;
     private LoopingTimeGrid[] blizzards;
-    private Map<State, Boolean> visited = new HashMap<>();
+    private Set<State> visited = new HashSet<>();
     private Vec2d target = null;
     private Vec2d initialPosition = null;
     private Vec2d[] targetByStep;
@@ -46,10 +47,10 @@ public class Day24 {
 
         while (!sDeque.isEmpty()) {
             val s = sDeque.pop();
-            if (visited.containsKey(s)) {
+            if (visited.contains(s)) {
                 continue;
             }
-            visited.put(s, true);
+            visited.add(s);
 
             val pos = s.position();
             val time = s.time();

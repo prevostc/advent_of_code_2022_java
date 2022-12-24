@@ -1,155 +1,196 @@
 package com.prevostc.adventofcode;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.prevostc.utils.FileReader;
 
-import lombok.EqualsAndHashCode;
 import lombok.val;
 
 public class Day19 {
+
+    private record Blueprint(
+            int id,
+            int oreRobotOreCost,
+            int clayRobotOreCost,
+            int obsidianRobotOreCost,
+            int obsidianRobotClayCost,
+            int geodeRobotOreCost,
+            int geodeRobotObsidianCost) {
+        public int maxOreCost() {
+            return Math.max(oreRobotOreCost,
+                    Math.max(clayRobotOreCost, Math.max(obsidianRobotOreCost, geodeRobotOreCost)));
+        }
+
+        public int maxClayCost() {
+            return Math.max(obsidianRobotClayCost, 0);
+        }
+
+        public int maxObsidianCost() {
+            return Math.max(geodeRobotObsidianCost, 0);
+        }
+    }
+
+    private record State(
+            int ore,
+            int clay,
+            int obsidian,
+            int geode,
+            int oreRobots,
+            int clayRobots,
+            int obsidianRobots,
+            int geodeRobots,
+            int time) {
+
+        public State toCacheable() {
+            // we don't care at which time we are when we cache
+            return new State(ore, clay, obsidian, geode, oreRobots, clayRobots, obsidianRobots, geodeRobots, 0);
+        }
+
+        // help out cut the search space
+        public State simplify(Blueprint blueprint) {
+            int or = ore;
+            int cl = clay;
+            int ob = obsidian;
+            int ge = geode;
+
+            int orR = oreRobots;
+            int clR = clayRobots;
+            int obR = obsidianRobots;
+            int geR = geodeRobots;
+
+            int orMc = blueprint.maxOreCost();
+            int clMc = blueprint.maxClayCost();
+            int obMc = blueprint.maxObsidianCost();
+
+            // no point in having more robots that we can build each round
+            orR = Math.min(orR, orMc);
+            clR = Math.min(clR, clMc);
+            obR = Math.min(obR, obMc);
+
+            // if we have not build something and we reached the max cost, no need to
+            // explore further
+            or = Math.min(or, time * orMc - orR * (time - 1));
+            cl = Math.min(cl, time * clMc - clR * (time - 1));
+            ob = Math.min(ob, time * obMc - obR * (time - 1));
+
+            return new State(or, cl, ob, ge, orR, clR, obR, geR, time);
+        }
+
+        public State buildNothing() {
+            return new State(ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots,
+                    geode + geodeRobots, oreRobots, clayRobots, obsidianRobots, geodeRobots,
+                    time + 1);
+        }
+
+        public State buildOreRobot(int oreCost) {
+            return new State(ore - oreCost + oreRobots, clay + clayRobots, obsidian + obsidianRobots,
+                    geode + geodeRobots, oreRobots + 1, clayRobots, obsidianRobots, geodeRobots,
+                    time + 1);
+        }
+
+        public State buildClayRobot(int oreCost) {
+            return new State(ore - oreCost + oreRobots, clay + clayRobots, obsidian + obsidianRobots,
+                    geode + geodeRobots, oreRobots, clayRobots + 1, obsidianRobots, geodeRobots,
+                    time + 1);
+        }
+
+        public State buildObsidianRobot(int oreCost, int clayCost) {
+            return new State(ore - oreCost + oreRobots, clay - clayCost + clayRobots, obsidian + obsidianRobots,
+                    geode + geodeRobots, oreRobots, clayRobots, obsidianRobots + 1, geodeRobots,
+                    time + 1);
+        }
+
+        public State buildGeodeRobot(int oreCost, int obsidianCost) {
+            return new State(ore - oreCost + oreRobots, clay + clayRobots, obsidian - obsidianCost + obsidianRobots,
+                    geode + geodeRobots, oreRobots, clayRobots, obsidianRobots, geodeRobots + 1,
+                    time + 1);
+        }
+    }
 
     FileReader fileReader = new FileReader();
 
     public Integer part1(String inputFilePath) throws IOException {
         val blueprints = parse(inputFilePath);
-
+        var total = 0;
         for (val blueprint : blueprints) {
-            val game = new Game(blueprint);
-            val maxQuality = game.findMaxQuality(24);
-            System.out.println(blueprint.id + ": " + maxQuality);
+            val maxGeodes = solve(blueprint, 24);
+            val quality = maxGeodes * blueprint.id();
+            total += quality;
+            System.out.println(blueprint.id() + " maxGeodes = " + maxGeodes);
         }
-        return 0;
+        return total;
     }
 
     public Integer part2(String inputFilePath) throws IOException {
-        return 0;
+        var blueprints = parse(inputFilePath);
+        blueprints = blueprints.subList(0, Math.min(blueprints.size(), 3));
+
+        var total = 1;
+        for (val blueprint : blueprints) {
+            val maxGeodes = solve(blueprint, 32);
+            total *= maxGeodes;
+            System.out.println(blueprint.id() + " maxGeodes = " + maxGeodes);
+        }
+        return total;
     }
 
-    private enum Resource {
-        ORE, CLAY, OBSIDIAN, GEODE;
-    }
+    private int solve(Blueprint blueprint, int minutes) {
 
-    private record Blueprint(int id,
-            Map<Resource /* robot type */, Map<Resource /* cost in */, Integer /* cost */>> robotCosts) {
-    }
+        Deque<State> sDeque = new ArrayDeque<>();
+        Set<State> visited = new HashSet<>();
+        sDeque.add(new State(0, 0, 0, 0, 1, 0, 0, 0, 0));
 
-    @EqualsAndHashCode
-    private class Game {
-        Map<String, Integer> maxQualityCache;
-        private Blueprint blueprint;
-        private EnumMap<Resource, Integer> bank;
-        private EnumMap<Resource, Integer> army;
+        int maxGeode = 0;
 
-        Game(Blueprint blueprint) {
-            this.maxQualityCache = new HashMap<>();
-            this.blueprint = blueprint;
-            this.bank = new EnumMap<>(Resource.class);
-            this.army = new EnumMap<>(Resource.class);
-            for (Resource resource : Resource.values()) {
-                bank.put(resource, 0);
-                army.put(resource, 0);
+        while (!sDeque.isEmpty()) {
+            val s = sDeque.pop().simplify(blueprint);
+
+            val cs = s.toCacheable();
+            if (visited.contains(cs)) {
+                continue;
             }
-            // initial robot
-            army.put(Resource.ORE, 1);
-        }
+            visited.add(cs);
 
-        private Game(Map<String, Integer> maxQualityCache, Blueprint blueprint, EnumMap<Resource, Integer> bank,
-                EnumMap<Resource, Integer> army) {
-            this.maxQualityCache = maxQualityCache;
-            this.blueprint = blueprint;
-            this.bank = bank;
-            this.army = army;
-        }
+            val ore = s.ore();
+            val clay = s.clay();
+            val obsidian = s.obsidian();
+            val geode = s.geode();
+            val time = s.time();
 
-        public int getQuality() {
-            return bank.get(Resource.GEODE);
-        }
-
-        public int findMaxQuality(int ticksLeft) {
-            if (ticksLeft == 0) {
-                return this.getQuality();
+            if (time == minutes) {
+                maxGeode = Math.max(maxGeode, geode);
+                continue;
             }
 
-            int maxForkQuality = 0;
-
-            // see if we can build something, starting with the most expensive
-            for (Resource robotType : Resource.values()) {
-                // here, we have a fork, we can either build or not
-                if (canBuildRobot(robotType)) {
-                    Game fork = new Game(this.maxQualityCache, blueprint, bank.clone(), bank.clone());
-                    fork.buildRobot(robotType);
-
-                    String forkKey = fork.toString() + ticksLeft;
-                    if (!maxQualityCache.containsKey(forkKey)) {
-                        val forkQuality = fork.findMaxQuality(ticksLeft);
-                        maxQualityCache.put(forkKey, forkQuality);
-                        maxForkQuality = Math.max(maxForkQuality, forkQuality);
-                    }
-
-                    maxForkQuality = Math.max(maxForkQuality, maxQualityCache.get(forkKey));
-                }
+            // if we can build a geode robot, DO IT
+            if (ore >= blueprint.geodeRobotOreCost() && obsidian >= blueprint.geodeRobotObsidianCost()) {
+                sDeque.add(s.buildGeodeRobot(blueprint.geodeRobotOreCost(), blueprint.geodeRobotObsidianCost()));
+                continue;
             }
 
-            // if we can buy the top robot but decided not to, no need to continue
-            if (canBuildRobot(Resource.GEODE)) {
-                return maxForkQuality;
+            sDeque.add(s.buildNothing());
+
+            // maybe we can build something to get closer to the geode robot
+            if (ore >= blueprint.obsidianRobotOreCost() && clay >= blueprint.obsidianRobotClayCost()) {
+                sDeque.add(s.buildObsidianRobot(blueprint.obsidianRobotOreCost(), blueprint.obsidianRobotClayCost()));
             }
-            if (canBuildRobot(Resource.OBSIDIAN)) {
-                return maxForkQuality;
+            if (ore >= blueprint.clayRobotOreCost()) {
+                sDeque.add(s.buildClayRobot(blueprint.clayRobotOreCost()));
             }
-
-            // see if we can collect something
-            for (Resource resource : Resource.values()) {
-                harvest(resource);
-            }
-
-            return Math.max(maxForkQuality, findMaxQuality(ticksLeft - 1));
-        }
-
-        boolean canBuildRobot(Resource robotType) {
-            val costs = blueprint.robotCosts.get(robotType);
-
-            for (Resource costType : Resource.values()) {
-                val cost = costs.get(costType);
-                val inBank = bank.get(costType);
-                if (inBank < cost) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        void buildRobot(Resource robotType) {
-            val costs = blueprint.robotCosts.get(robotType);
-
-            army.put(robotType, army.get(robotType) + 1);
-            for (Resource costType : Resource.values()) {
-                val cost = costs.get(costType);
-                bank.put(costType, bank.get(costType) - cost);
+            if (ore >= blueprint.oreRobotOreCost()) {
+                sDeque.add(s.buildOreRobot(blueprint.oreRobotOreCost()));
             }
         }
 
-        void harvest(Resource resource) {
-            val armySize = army.get(resource);
-            if (armySize > 0) {
-                bank.put(resource, bank.get(resource) + armySize);
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "Game [bank=" + bank + ", army=" + army + "]";
-        }
+        return maxGeode;
     }
 
     private final static Pattern INPUT_PATTERN = Pattern
@@ -161,28 +202,14 @@ public class Day19 {
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
                 .map(m -> {
-                    var id = Integer.parseInt(m.group(1));
-                    Map<Resource, Map<Resource, Integer>> robotCosts = new EnumMap<>(Resource.class);
-                    // init all costs to zero
-                    for (Resource r : Resource.values()) {
-                        robotCosts.put(r, new EnumMap<>(Resource.class));
-                        for (Resource r2 : Resource.values()) {
-                            robotCosts.get(r).put(r2, 0);
-                        }
-                    }
-
-                    // Each ore robot costs (\\d+) ore.
-                    robotCosts.get(Resource.ORE).put(Resource.ORE, Integer.parseInt(m.group(2)));
-                    // Each clay robot costs (\\d+) ore.
-                    robotCosts.get(Resource.CLAY).put(Resource.ORE, Integer.parseInt(m.group(3)));
-                    // Each obsidian robot costs (\\d+) ore and (\\d+) clay.
-                    robotCosts.get(Resource.OBSIDIAN).put(Resource.ORE, Integer.parseInt(m.group(4)));
-                    robotCosts.get(Resource.OBSIDIAN).put(Resource.CLAY, Integer.parseInt(m.group(5)));
-                    // Each geode robot costs (\\d+) ore and (\\d+) obsidian.
-                    robotCosts.get(Resource.GEODE).put(Resource.ORE, Integer.parseInt(m.group(6)));
-                    robotCosts.get(Resource.GEODE).put(Resource.OBSIDIAN, Integer.parseInt(m.group(7)));
-
-                    return new Blueprint(id, robotCosts);
+                    return new Blueprint(
+                            Integer.parseInt(m.group(1)),
+                            Integer.parseInt(m.group(2)),
+                            Integer.parseInt(m.group(3)),
+                            Integer.parseInt(m.group(4)),
+                            Integer.parseInt(m.group(5)),
+                            Integer.parseInt(m.group(6)),
+                            Integer.parseInt(m.group(7)));
                 }).toList();
     }
 }
