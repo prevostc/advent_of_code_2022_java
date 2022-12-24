@@ -16,6 +16,14 @@ public record Vec2d(int x, int y) implements Cloneable {
         return fromString(coords, ",");
     }
 
+    public Vec2d wrap(int width, int height) {
+        return new Vec2d(x % width, y % height);
+    }
+
+    public Vec2d negate() {
+        return new Vec2d(-x, -y);
+    }
+
     public Vec2d add(Vec2d other) {
         return new Vec2d(x + other.x, y + other.y);
     }
