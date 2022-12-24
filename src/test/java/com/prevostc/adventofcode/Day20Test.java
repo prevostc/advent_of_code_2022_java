@@ -15,7 +15,7 @@ public class Day20Test {
     public void testPart1Example() throws IOException {
         val day = new Day20();
         val answer = day.part1("day20/example.txt");
-        assertEquals(64, answer);
+        assertEquals(BigInteger.valueOf(3), answer);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class Day20Test {
     public void testPart2Example() throws IOException {
         val day = new Day20();
         val answer = day.part2("day20/example.txt");
-        assertEquals(58, answer);
+        assertEquals(BigInteger.valueOf(1623178306), answer);
     }
 
     @Test
