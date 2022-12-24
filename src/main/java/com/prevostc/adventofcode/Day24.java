@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.prevostc.utils.FileReader;
@@ -139,6 +138,10 @@ public class Day24 {
         UP, DOWN, LEFT, RIGHT;
     }
 
+    /**
+     * We need a way to look at blizzard position any point in time
+     * this does exactly that
+     */
     private class LoopingTimeGrid {
         private boolean[] grid;
         private Vec2d dimensions;
@@ -170,31 +173,5 @@ public class Day24 {
 
             return this.grid[y * dimensions.x() + x];
         }
-
-        public String toStringAtTime(int timeOffset) {
-            StringBuilder sb = new StringBuilder();
-            for (int y = 0; y < dimensions.y(); y++) {
-                for (int x = 0; x < dimensions.x(); x++) {
-                    sb.append(this.get(timeOffset, x, y) ? '#' : '.');
-                }
-                sb.append('\n');
-            }
-            return sb.toString();
-        }
-    }
-
-    private String printGrid(int timeOffset) {
-        StringBuilder sb = new StringBuilder();
-        for (int y = 0; y < this.dimensions.y(); y++) {
-            for (int x = 0; x < this.dimensions.x(); x++) {
-                boolean hasBlizzard = false;
-                for (Direction dir : Direction.values()) {
-                    hasBlizzard |= this.blizzards[dir.ordinal()].get(timeOffset, x, y);
-                }
-                sb.append(hasBlizzard ? '#' : '.');
-            }
-            sb.append('\n');
-        }
-        return sb.toString();
     }
 }
