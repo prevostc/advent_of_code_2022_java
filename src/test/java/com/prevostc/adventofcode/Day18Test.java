@@ -3,7 +3,6 @@ package com.prevostc.adventofcode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +21,7 @@ public class Day18Test {
     public void testPart1Main() throws IOException {
         val day = new Day18();
         val answer = day.part1("day18/input.txt");
+        assertEquals(4400, answer);
         System.out.println("Day18 - Part 1: " + answer);
     }
 
@@ -36,6 +36,7 @@ public class Day18Test {
     public void testPart2Main() throws IOException {
         val day = new Day18();
         val answer = day.part2("day18/input.txt");
+        assertEquals(2522, answer);
         System.out.println("Day18 - Part 2: " + answer);
     }
 }

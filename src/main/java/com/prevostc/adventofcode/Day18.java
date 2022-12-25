@@ -43,11 +43,10 @@ public class Day18 {
                 cubes.stream().map(Vec3d::y).max(Integer::compare).orElse(0) + 1,
                 cubes.stream().map(Vec3d::z).max(Integer::compare).orElse(0) + 1);
 
+        // DFS from outside of the blob
         Set<Vec3d> visited = new HashSet<>(cubes);
-
         Set<Vec3d> current = new HashSet<>();
         current.add(minBounds);
-
         int maxIter = 100_000;
         while (maxIter-- > 0) {
             visited.addAll(current);

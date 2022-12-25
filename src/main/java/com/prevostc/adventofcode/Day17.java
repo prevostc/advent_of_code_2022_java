@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.prevostc.utils.BigInt;
 import com.prevostc.utils.FileReader;
 import com.prevostc.utils.Grid2d;
 import com.prevostc.utils.LoopingList;
@@ -119,8 +120,8 @@ public class Day17 {
     }
 
     public Integer part1(String inputFilePath) throws IOException {
-        LoopingList<String> jetPattern = new LoopingList(fileReader.readAllLines(inputFilePath)
-                .get(0).chars().mapToObj(c -> Character.toString(c)).collect(Collectors.toList()));
+        LoopingList<String> jetPattern = new LoopingList<>(fileReader.readAllLines(inputFilePath)
+                .get(0).chars().mapToObj(Character::toString).collect(Collectors.toList()));
 
         val gridWidth = 7;
         val gridHeight = 1_000_001;
@@ -139,14 +140,14 @@ public class Day17 {
     }
 
     public BigInteger part2(String inputFilePath) throws IOException {
-        LoopingList<String> jetPattern = new LoopingList(fileReader.readAllLines(inputFilePath)
-                .get(0).chars().mapToObj(c -> Character.toString(c)).collect(Collectors.toList()));
+        LoopingList<String> jetPattern = new LoopingList<>(fileReader.readAllLines(inputFilePath)
+                .get(0).chars().mapToObj(Character::toString).collect(Collectors.toList()));
 
         // same as 1, but we look for a pattern since we can't compute all the way up
         // we'll just hope the jet patterns are not messed up
 
         val gridWidth = 7;
-        val gridHeight = 1_00_000_001;
+        val gridHeight = 100_000_001;
         val grid = new Grid2d<>(gridWidth, gridHeight, Elem.EMPTY);
         val maxIter = BigInteger.TEN.pow(12);
 
@@ -160,9 +161,8 @@ public class Day17 {
 
         boolean hasSkipped = false;
 
-        for (BigInteger droppedBlocks = BigInteger.ZERO; droppedBlocks
-                .compareTo(maxIter) < 0; droppedBlocks = droppedBlocks
-                        .add(BigInteger.ONE)) {
+        for (BigInteger droppedBlocks = BigInteger.ZERO; BigInt.lt(droppedBlocks,
+                maxIter); droppedBlocks = droppedBlocks.add(BigInteger.ONE)) {
             dropOne(grid, jetPattern);
 
             if (hasSkipped) {

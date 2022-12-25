@@ -7,6 +7,8 @@ import java.math.BigInteger;
 
 import org.junit.jupiter.api.Test;
 
+import com.prevostc.utils.BigInt;
+
 import lombok.val;
 
 public class Day17Test {
@@ -22,6 +24,7 @@ public class Day17Test {
     public void testPart1Main() throws IOException {
         val day = new Day17();
         val answer = day.part1("day17/input.txt");
+        assertEquals(3083, answer);
         System.out.println("Day17 - Part 1: " + answer);
     }
 
@@ -29,15 +32,14 @@ public class Day17Test {
     public void testPart2Example() throws IOException {
         val day = new Day17();
         val answer = day.part2("day17/example.txt");
-        val expected = BigInteger.valueOf(1514285).multiply(BigInteger.TEN.pow(6))
-                .add(BigInteger.valueOf(714288));
-        assertEquals(expected, answer);
+        assertEquals(BigInt.of("1514285714288"), answer);
     }
 
     @Test
     public void testPart2Main() throws IOException {
         val day = new Day17();
         val answer = day.part2("day17/input.txt");
+        assertEquals(BigInt.of("1532183908048"), answer);
         System.out.println("Day17 - Part 2: " + answer);
     }
 }
