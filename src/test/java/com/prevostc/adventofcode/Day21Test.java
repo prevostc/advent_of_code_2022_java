@@ -28,14 +28,14 @@ public class Day21Test {
     @Test
     public void testPart2Example() throws IOException {
         val day = new Day21();
-        val answer = day.part2("day21/example.txt");
+        val answer = day.part2("day21/example.txt", 1);
         assertEquals(BigInteger.valueOf(301), answer);
     }
 
     @Test
     public void testPart2Main() throws IOException {
         val day = new Day21();
-        val answer = day.part2("day21/input.txt");
+        val answer = day.part2("day21/input.txt", -1);
         System.out.println("Day21 - Part 2: " + answer);
     }
 }

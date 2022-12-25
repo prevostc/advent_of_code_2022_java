@@ -24,7 +24,7 @@ public class Day21 {
         return solve("root");
     }
 
-    public BigInteger part2(String inputFilePath) throws IOException {
+    public BigInteger part2(String inputFilePath, int dir) throws IOException {
         parse(inputFilePath);
 
         val rootOp = operators.get("root").left();
@@ -36,8 +36,8 @@ public class Day21 {
         var min = BigInteger.ZERO;
         var max = BigInteger.valueOf(10).pow(15); // a previous attempt told us it's < 10^14
         val two = BigInteger.valueOf(2);
-        int first = 100;
-        while (min.compareTo(max) < 0 && first-- > 0) {
+        BigInteger found = null;
+        while (min.compareTo(max) < 0) {
             val mid = min.add(max).divide(two);
             operators.put("humn", new Either.Right<>(mid));
             val left = solve(rootOp.leftId);
@@ -48,11 +48,25 @@ public class Day21 {
             if (cmp == 0) {
                 System.out.println("Found solution: " + mid);
                 System.out.println(solve(rootOp.leftId) + " = " + solve(rootOp.rightId));
-                return mid;
-            } else if (cmp > 0) {
+                found = mid;
+                break;
+            } else if (cmp * dir < 0) {
                 min = mid;
             } else {
                 max = mid;
+            }
+        }
+
+        // find all solutions "around" the one we found
+        // it's probably the lowest one
+        for (int i = -100; i < 100; i++) {
+            val humn = found.add(BigInteger.valueOf(i));
+            operators.put("humn", new Either.Right<>(humn));
+            val left = solve(rootOp.leftId);
+            val cmp = left.compareTo(right);
+            if (cmp == 0) {
+                System.out.println("Found solution: " + humn);
+                return humn;
             }
         }
         throw new IllegalStateException("No solution found");
