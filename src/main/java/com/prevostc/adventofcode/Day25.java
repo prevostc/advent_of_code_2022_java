@@ -23,24 +23,11 @@ public class Day25 {
         }
 
         String tot = "0";
-        BigInteger totI = BigInteger.ZERO;
         for (val n : fileReader.readAllLines(inputFilePath)) {
-            System.out.println(n + " -> " + snafuToInt(n));
-            totI = totI.add(snafuToInt(n));
-
             tot = snafuAdd(tot, n);
-
-            System.out.println("int(sum(snafu)) == sum(int(snafu)) ? : " + totI.equals(snafuToInt(tot)));
-            System.out.println(totI);
-            System.out.println(snafuToInt(tot));
         }
 
         return tot;
-    }
-
-    public Integer part2(String inputFilePath) throws IOException {
-        val nums = fileReader.readAllLines(inputFilePath);
-        return 0;
     }
 
     private String snafuAdd(String a, String b) {
@@ -69,17 +56,4 @@ public class Day25 {
         }
         return result.reverse().toString();
     }
-
-    private BigInteger snafuToInt(String snafu) {
-        int base = snafu.length();
-        var v = BigInteger.ZERO;
-        for (val c : snafu.toCharArray()) {
-            val p = BigInteger.valueOf((long) Math.pow(5, base - 1));
-            val bv = BigInteger.valueOf(digitValue.get(String.valueOf(c)));
-            v = v.add(bv.multiply(p));
-            base--;
-        }
-        return v;
-    }
-
 }
