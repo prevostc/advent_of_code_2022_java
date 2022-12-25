@@ -28,6 +28,22 @@ public record Vec2d(int x, int y) implements Cloneable {
         return new Vec2d(x + other.x, y + other.y);
     }
 
+    public Vec2d sub(Vec2d other) {
+        return new Vec2d(x - other.x, y - other.y);
+    }
+
+    public Vec2d mul(Vec2d other) {
+        return new Vec2d(x * other.x, y * other.y);
+    }
+
+    public Vec2d div(Vec2d other) {
+        return new Vec2d(x / other.x, y / other.y);
+    }
+
+    public Vec2d mod(Vec2d other) {
+        return new Vec2d(x % other.x, y % other.y);
+    }
+
     public Vec2d max(Vec2d other) {
         return new Vec2d(Math.max(x, other.x), Math.max(y, other.y));
     }
