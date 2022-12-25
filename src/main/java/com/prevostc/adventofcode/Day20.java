@@ -3,9 +3,9 @@ package com.prevostc.adventofcode;
 import java.io.IOException;
 import java.math.BigInteger;
 
+import com.prevostc.utils.BigInt;
 import com.prevostc.utils.FileReader;
 
-import lombok.Setter;
 import lombok.val;
 
 public class Day20 {
@@ -21,7 +21,7 @@ public class Day20 {
     }
 
     public BigInteger part2(String inputFilePath) throws IOException {
-        val state = parse(inputFilePath, BigInteger.valueOf(811589153));
+        val state = parse(inputFilePath, BigInt.of(811589153));
 
         for (int passes = 0; passes < 10; passes++) {
             for (int i = 0; i < state.data.length; i++) {
@@ -40,9 +40,9 @@ public class Day20 {
         public State(int[] data, BigInteger decryptKey) {
             this.data = new BigInteger[data.length];
             for (int i = 0; i < data.length; i++) {
-                this.data[i] = BigInteger.valueOf(data[i]).multiply(decryptKey);
+                this.data[i] = BigInt.of(data[i]).multiply(decryptKey);
             }
-            this.wrap = BigInteger.valueOf(data.length - 1);
+            this.wrap = BigInt.of(data.length - 1);
 
             this.oIdx2CurIdx = new int[data.length];
             for (int i = 0; i < data.length; i++) {
@@ -68,7 +68,7 @@ public class Day20 {
         public void move(int originalIdx) {
             int currentIdx = oIdx2CurIdx[originalIdx];
             val value = data[currentIdx];
-            int targetIdx = value.add(BigInteger.valueOf(currentIdx)).mod(wrap).intValue();
+            int targetIdx = value.add(BigInt.of(currentIdx)).mod(wrap).intValue();
 
             if (currentIdx == targetIdx) {
                 return;
