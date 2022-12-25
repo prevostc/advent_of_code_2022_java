@@ -81,6 +81,12 @@ public record Vec2d(int x, int y) implements Cloneable {
                 .toList();
     }
 
+    public List<Vec2d> getNeighborsCardinalAndSelf() {
+        return List.of(new Vec2d(-1, 0), new Vec2d(1, 0), new Vec2d(0, -1), new Vec2d(0, 1), new Vec2d(0, 0)).stream()
+                .map(this::add)
+                .toList();
+    }
+
     public List<Vec2d> getNeighborsAll() {
         return List.of(new Vec2d(-1, 0), new Vec2d(1, 0), new Vec2d(0, -1), new Vec2d(0, 1), new Vec2d(-1, -1),
                 new Vec2d(1, -1), new Vec2d(-1, 1), new Vec2d(1, 1)).stream().map(this::add).toList();
@@ -105,5 +111,9 @@ public record Vec2d(int x, int y) implements Cloneable {
 
     public int manhattanDistance(Vec2d other) {
         return Math.abs(other.x - this.x) + Math.abs(other.y - this.y);
+    }
+
+    public boolean isContainedInDimension(Vec2d zeroBasedDimensions) {
+        return x >= 0 && x < zeroBasedDimensions.x && y >= 0 && y < zeroBasedDimensions.y;
     }
 }

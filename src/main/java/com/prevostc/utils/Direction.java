@@ -11,6 +11,23 @@ public enum Direction {
             Direction.LEFT, new Vec2d(-1, 0),
             Direction.RIGHT, new Vec2d(1, 0));
 
+    public static boolean isArrowChar(Character c) {
+        return switch (c) {
+            case '^', 'v', '<', '>' -> true;
+            default -> false;
+        };
+    }
+
+    public static Direction fromArrowChar(Character c) {
+        return switch (c) {
+            case '^' -> UP;
+            case 'v' -> DOWN;
+            case '<' -> LEFT;
+            case '>' -> RIGHT;
+            default -> throw new IllegalArgumentException("Invalid arrow character: " + c);
+        };
+    }
+
     public Vec2d toVec2d() {
         return vec2dMap.get(this);
     }
