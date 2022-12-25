@@ -18,16 +18,10 @@ public class Day23Test {
     }
 
     @Test
-    public void testPart1Example2() throws IOException {
-        val day = new Day23();
-        val answer = day.part1("day23/example2.txt");
-        assertEquals(110, answer);
-    }
-
-    @Test
     public void testPart1Main() throws IOException {
         val day = new Day23();
         val answer = day.part1("day23/input.txt");
+        assertEquals(4138, answer);
         System.out.println("Day23 - Part 1: " + answer);
     }
 
@@ -42,6 +36,7 @@ public class Day23Test {
     public void testPart2Main() throws IOException {
         val day = new Day23();
         val answer = day.part2("day23/input.txt");
+        assertEquals(1010, answer);
         System.out.println("Day23 - Part 2: " + answer);
     }
 }

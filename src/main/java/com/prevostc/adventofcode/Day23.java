@@ -39,7 +39,6 @@ public class Day23 {
 
     public Integer part1(String inputFilePath) throws IOException {
         init(inputFilePath);
-        System.out.println(grid);
 
         for (int i = 0; i < 10; i++) {
             round();
@@ -50,8 +49,6 @@ public class Day23 {
         val minY = elfs.stream().map(Vec2d::y).min(Integer::compareTo).orElseThrow();
         val maxX = elfs.stream().map(Vec2d::x).max(Integer::compareTo).orElseThrow();
         val maxY = elfs.stream().map(Vec2d::y).max(Integer::compareTo).orElseThrow();
-        // val gridWidth = grid.bottomRight().x() - grid.topLeft().x() + 1;
-        // val gridHeight = grid.bottomRight().y() - grid.topLeft().y() + 1;
         val gridWidth = maxX - minX + 1;
         val gridHeight = maxY - minY + 1;
         return (gridWidth * gridHeight) - elfs.size();
