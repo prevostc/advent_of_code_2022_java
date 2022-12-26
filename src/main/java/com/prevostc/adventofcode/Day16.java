@@ -33,12 +33,23 @@ public class Day16 {
         this.compressGraph(graph);
         graph.addNode("AA", 0);
 
+        return solve1head(graph, new State1Head(Set.of("AA"), 30, "AA", 0));
+    }
+
+    private int solve1head(DirectedWeightedGraph<Integer> graph, State1Head initialState) {
+
+        Set<State1Head> stateCache = new HashSet<>();
         val sDeque = new ArrayDeque<State1Head>();
-        sDeque.add(new State1Head(Set.of(), 30, "AA", 0));
+        sDeque.add(initialState);
 
         int maxFlow = 0;
         while (!sDeque.isEmpty()) {
             val s = sDeque.pop();
+
+            if (stateCache.contains(s)) {
+                continue;
+            }
+            stateCache.add(s);
 
             if (s.minutesLeft <= 0) {
                 continue;
@@ -66,49 +77,99 @@ public class Day16 {
     private record State2Head(Set<String> visited, int minutesLeftH1, String posH1, int minutesLeftH2, String posH2,
             int flow) {
 
+        public State2Head simplify() {
+            if (minutesLeftH1 <= 0) {
+                return new State2Head(visited, 0, "AA", minutesLeftH2, posH2, flow);
+            }
+            if (minutesLeftH2 <= 0) {
+                return new State2Head(visited, 0, "AA", minutesLeftH1, posH1, flow);
+            }
+            return this;
+        }
+
     }
 
     public Integer part2(String inputFilePath) throws IOException {
         val graph = parseInput(inputFilePath);
-
+        val startPos = "AA";
         // AA always has flow rate 0 so it will be compressed out
         // set it to 1 so we can start from it
-        graph.addNode("AA", 1);
+        graph.addNode(startPos, 1);
         this.compressGraph(graph);
-        graph.addNode("AA", 0);
+        graph.addNode(startPos, 0);
 
+        Set<State2Head> stateCache = new HashSet<>();
         val sDeque = new ArrayDeque<State2Head>();
-        sDeque.add(new State2Head(Set.of(), 26, "AA", 26, "AA", 0));
+
+        int time = 26;
+        sDeque.add(new State2Head(Set.of(startPos), time, startPos, time, startPos, 0));
 
         int maxFlow = 0;
         while (!sDeque.isEmpty()) {
-            val s = sDeque.pop();
+            val s = sDeque.removeLast().simplify();
 
-            boolean h1Stop = s.minutesLeftH1 <= 0;
-            boolean h2Stop = s.minutesLeftH2 <= 0;
-            if (h1Stop && h2Stop) {
+            if (stateCache.contains(s)) {
                 continue;
             }
+            stateCache.add(s);
 
-            int posFlowH1 = h1Stop ? 0 : s.minutesLeftH1 * graph.getNode(s.posH1);
-            int posFlowH2 = h2Stop ? 0 : s.minutesLeftH2 * graph.getNode(s.posH2);
-            int totalFlow = s.flow + posFlowH1 + posFlowH2;
-            var h1Children = h1Stop ? List.of(s.posH1) : graph.children(s.posH1);
-            var h2Children = h2Stop ? List.of(s.posH2) : graph.children(s.posH2);
+            // System.out.println(sDeque.size());
+            // System.out.println(s.visited + " " + s.posH1 + " " + s.posH2);
 
-            for (val cH1 : h1Children) {
-                for (val cH2 : h2Children) {
-                    if (cH1.equals(cH2) || s.visited.contains(cH1) || s.visited.contains(cH2) || cH1.equals(s.posH1)
-                            || cH2.equals(s.posH2)) {
-                        continue;
-                    }
-                    val visited = new HashSet<>(s.visited);
-                    visited.add(s.posH1);
-                    visited.add(s.posH2);
-                    val h1MinutesLeft = s.minutesLeftH1 - graph.edgeCost(s.posH1, cH1) - 1 /* open time */;
-                    val h2MinutesLeft = s.minutesLeftH2 - graph.edgeCost(s.posH2, cH2) - 1 /* open time */;
-                    sDeque.add(new State2Head(visited, h1MinutesLeft, cH1, h2MinutesLeft, cH2, totalFlow));
+            val visited = new HashSet<>(s.visited);
+            visited.add(s.posH1);
+            visited.add(s.posH2);
+
+            int totalFlow = s.flow;
+            int posFlowH1 = s.minutesLeftH1 * graph.getNode(s.posH1);
+            int posFlowH2 = s.minutesLeftH2 * graph.getNode(s.posH2);
+            if (s.minutesLeftH1 <= 0) {
+                totalFlow += solve1head(graph, new State1Head(visited, s.minutesLeftH2, s.posH2, 0));
+            } else if (s.minutesLeftH2 <= 0) {
+                totalFlow += solve1head(graph, new State1Head(visited, s.minutesLeftH1, s.posH1, 0));
+            } else {
+                totalFlow += posFlowH1 + posFlowH2;
+
+                // test if we have enough time left to beat our current score
+                int maxMinutesLeft = Math.max(s.minutesLeftH1, s.minutesLeftH2);
+                int totalFlowLeft = graph.getNodes().keySet().stream().filter(n -> !visited.contains(n))
+                        .mapToInt(n -> (maxMinutesLeft - 1) * graph.getNode(n)).sum();
+                if (totalFlow + totalFlowLeft < maxFlow) {
+                    continue;
                 }
+
+                val h1Children = graph.children(s.posH1).stream()
+                        .filter(c -> !visited.contains(c))
+                        .filter(c -> !c.equals(s.posH2) && !c.equals(s.posH1))
+                        .sorted((a, b) -> graph.getNode(b) - graph.getNode(a)) // order by flow rate
+                        .collect(Collectors.toList());
+                val h2Children = graph.children(s.posH2).stream()
+                        .filter(c -> !visited.contains(c))
+                        .filter(c -> !c.equals(s.posH2) && !c.equals(s.posH1)) // order by flow rate
+                        .sorted((a, b) -> graph.getNode(b) - graph.getNode(a))
+                        .collect(Collectors.toList());
+
+                for (val cH1 : h1Children) {
+                    for (val cH2 : h2Children) {
+                        if (cH1.equals(cH2)) {
+                            continue;
+                        }
+
+                        // only consider half of the graph
+                        if (s.posH1.equals("AA") && s.posH2.equals("AA") && s.posH1.compareTo(s.posH2) > 0) {
+                            continue;
+                        }
+
+                        val h1MinutesLeft = s.minutesLeftH1 - graph.edgeCost(s.posH1, cH1) - 1 /* open time */;
+                        val h2MinutesLeft = s.minutesLeftH2 - graph.edgeCost(s.posH2, cH2) - 1 /* open time */;
+                        sDeque.add(new State2Head(visited, h1MinutesLeft, cH1, h2MinutesLeft, cH2, totalFlow));
+                    }
+                }
+
+            }
+
+            if (totalFlow > maxFlow) {
+                System.out.println("Better solution: " + totalFlow);
             }
 
             maxFlow = Math.max(maxFlow, totalFlow);
