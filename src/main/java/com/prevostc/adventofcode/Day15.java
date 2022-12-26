@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.prevostc.utils.BigInt;
 import com.prevostc.utils.FileReader;
 import com.prevostc.utils.IntRange;
 import com.prevostc.utils.Vec2d;
@@ -80,8 +81,7 @@ public class Day15 {
                     val consider = new Vec2d(a.max() + 1, y);
                     if (consider.x() <= maxXY && consider.y() <= maxXY && consider.x() >= minXY
                             && consider.y() >= minXY) {
-                        return BigInteger.valueOf(consider.x()).multiply(BigInteger.valueOf(4_000_000))
-                                .add(BigInteger.valueOf(consider.y()));
+                        return BigInt.of(consider.x()).multiply(BigInt.of(4_000_000)).add(BigInt.of(consider.y()));
                     }
                 }
             }
