@@ -14,12 +14,12 @@ public class Day14 {
 
     FileReader fileReader = new FileReader();
 
-    private enum Rock {
+    private enum Terrain {
         EMPTY('.'), ROCK('#'), SAND('o');
 
         private char symbol;
 
-        Rock(char symbol) {
+        Terrain(char symbol) {
             this.symbol = symbol;
         }
 
@@ -40,7 +40,6 @@ public class Day14 {
             totalPour++;
         }
 
-        System.out.println(grid);
         return totalPour;
     }
 
@@ -52,7 +51,7 @@ public class Day14 {
         int lowestPoint = grid.bottomRight().y() + 2;
         int yDist = lowestPoint - pourFrom.y();
         for (int x = pourFrom.x() - yDist; x <= pourFrom.x() + yDist; x++) {
-            grid.set(new Vec2d(x, lowestPoint), Rock.ROCK);
+            grid.set(new Vec2d(x, lowestPoint), Terrain.ROCK);
         }
 
         // pour sand
@@ -64,8 +63,8 @@ public class Day14 {
         return totalPour;
     }
 
-    public Grid2d<Rock> parse(String inputFilePath) throws IOException {
-        val grid = new Grid2d<Rock>(1000, 1000, Rock.EMPTY);
+    public Grid2d<Terrain> parse(String inputFilePath) throws IOException {
+        val grid = new Grid2d<Terrain>(1000, 1000, Terrain.EMPTY);
         val lines = fileReader.readAllLines(inputFilePath);
 
         // parse input into a grid
@@ -75,7 +74,7 @@ public class Day14 {
                 val start = coords.get(i);
                 val end = coords.get(i + 1);
                 for (val c : start.straightTo(end)) {
-                    grid.set(c, Rock.ROCK);
+                    grid.set(c, Terrain.ROCK);
                 }
             }
         }
@@ -85,32 +84,21 @@ public class Day14 {
     /**
      * @return true if we reached equilibrium, false if we reached the abyss
      */
-    public boolean pourSand(Grid2d<Rock> grid, Vec2d from, int abyssY) {
-        /**
-         * A unit of sand always falls down one step if possible. If the tile
-         * immediately below is blocked (by rock or sand), the unit of sand attempts to
-         * instead move diagonally one step down and to the left. If that tile is
-         * blocked, the unit of sand attempts to instead move diagonally one step down
-         * and to the right. Sand keeps moving as long as it is able to do so, at each
-         * step trying to move down, then down-left, then down-right. If all three
-         * possible destinations are blocked, the unit of sand comes to rest and no
-         * longer moves, at which point the next unit of sand is created back at the
-         * source.
-         */
-        if (grid.is(from, Rock.SAND)) {
+    public boolean pourSand(Grid2d<Terrain> grid, Vec2d from, int abyssY) {
+        if (grid.is(from, Terrain.SAND)) {
             // sand pouring overflowed
             return false;
         }
 
-        grid.set(from, Rock.SAND);
+        grid.set(from, Terrain.SAND);
 
         while (from.y() < abyssY) {
             val tries = List.of(from.down(), from.downLeft(), from.downRight());
             boolean moved = false;
             for (val t : tries) {
-                if (grid.is(t, Rock.EMPTY)) {
-                    grid.set(t, Rock.SAND);
-                    grid.set(from, Rock.EMPTY);
+                if (grid.is(t, Terrain.EMPTY)) {
+                    grid.set(t, Terrain.SAND);
+                    grid.set(from, Terrain.EMPTY);
                     from = t;
                     moved = true;
                     break;
