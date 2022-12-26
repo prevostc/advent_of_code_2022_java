@@ -1,8 +1,10 @@
 package com.prevostc.adventofcode;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -10,209 +12,146 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.prevostc.utils.DirectedWeightedGraph;
 import com.prevostc.utils.FileReader;
 
-import lombok.Setter;
 import lombok.val;
 
 public class Day16 {
 
     FileReader fileReader = new FileReader();
 
+    private record State1Head(Set<String> visited, int minutesLeft, String pos, int flow) {
+    }
+
     public Integer part1(String inputFilePath) throws IOException {
-        Graph g = parseInput(inputFilePath);
-        g.setSearchTime(30);
+        val graph = parseInput(inputFilePath);
+
         // AA always has flow rate 0 so it will be compressed out
         // set it to 1 so we can start from it
-        g.nodes.put("AA", 1);
-        g.compress();
-        g.nodes.put("AA", 0);
+        graph.addNode("AA", 1);
+        this.compressGraph(graph);
+        graph.addNode("AA", 0);
 
-        return g.findMaxFlow(0, 0, Set.of(), "AA");
+        val sDeque = new ArrayDeque<State1Head>();
+        sDeque.add(new State1Head(Set.of(), 30, "AA", 0));
+
+        int maxFlow = 0;
+        while (!sDeque.isEmpty()) {
+            val s = sDeque.pop();
+
+            if (s.minutesLeft <= 0) {
+                continue;
+            }
+
+            int posFlow = s.minutesLeft * graph.getNode(s.pos);
+            int totalFlow = s.flow() + posFlow;
+            for (val c : graph.children(s.pos())) {
+                if (s.visited().contains(c)) {
+                    continue;
+                }
+                val visited = new HashSet<>(s.visited);
+                visited.add(s.pos());
+                sDeque.add(new State1Head(visited, s.minutesLeft - graph.edgeCost(s.pos(), c) - 1 /* open time */, c,
+                        totalFlow));
+            }
+
+            maxFlow = Math.max(maxFlow, totalFlow);
+        }
+
+        return maxFlow;
+    }
+
+    // same logic as 1 headed but we share a visited state
+    private record State2Head(Set<String> visited, int minutesLeftH1, String posH1, int minutesLeftH2, String posH2,
+            int flow) {
+
     }
 
     public Integer part2(String inputFilePath) throws IOException {
-        Graph g = parseInput(inputFilePath);
-        g.setSearchTime(26);
+        val graph = parseInput(inputFilePath);
+
         // AA always has flow rate 0 so it will be compressed out
         // set it to 1 so we can start from it
-        g.nodes.put("AA", 1);
-        g.compress();
-        g.nodes.put("AA", 0);
+        graph.addNode("AA", 1);
+        this.compressGraph(graph);
+        graph.addNode("AA", 0);
 
-        return g.findMaxFlow2Headed(0, 0, 0, Set.of(), "AA", "AA");
-    }
+        val sDeque = new ArrayDeque<State2Head>();
+        sDeque.add(new State2Head(Set.of(), 26, "AA", 26, "AA", 0));
 
-    private class Graph {
-        @Setter
-        private int searchTime;
-        private Map<String, Integer> nodes; // id to flow rate map
-        private Map<String, Map<String, Integer>> edges; // "from" to "to" to "distance" map
+        int maxFlow = 0;
+        while (!sDeque.isEmpty()) {
+            val s = sDeque.pop();
 
-        Graph() {
-            nodes = new HashMap<>();
-            edges = new HashMap<>();
-            this.searchTime = 0;
-        }
-
-        void addNode(String id, int flowRate) {
-            nodes.put(id, flowRate);
-        }
-
-        void addEdge(String from, String to, int distance) {
-            edges.computeIfAbsent(from, k -> new HashMap<>()).put(to, distance);
-        }
-
-        void addEdgeIfShorter(String from, String to, int distance) {
-            val f = edges.computeIfAbsent(from, k -> new HashMap<>());
-            val d = f.get(to);
-            if (d == null || d > distance) {
-                f.put(to, distance);
-            }
-        }
-
-        int edgeWeight(String from, String to) {
-            return edges.get(from).get(to);
-        }
-
-        int nodeFlowRate(String id) {
-            return nodes.get(id);
-        }
-
-        void removeNode(String id) {
-            nodes.remove(id);
-            edges.remove(id);
-            edges.values().forEach(m -> m.remove(id));
-        }
-
-        Set<String> children(String id) {
-            return edges.get(id).keySet();
-        }
-
-        // remove nodes with flow rate 0
-        void compress() {
-            // for each non zero nodes
-            val nonZero = nodes.entrySet().stream().filter(e -> e.getValue() != 0).map(Map.Entry::getKey)
-                    .collect(Collectors.toSet());
-
-            Map<String, Map<String, Integer>> newEdges = new HashMap<>();
-
-            // find the distance to other nonZero nodes
-            for (val id : nonZero) {
-                this.minDepthFrom(id, (toId, depth) -> {
-                    if (id.equals(toId)) {
-                        return;
-                    }
-                    if (nonZero.contains(toId)) {
-                        newEdges.computeIfAbsent(id, k -> new HashMap<>()).put(toId, depth);
-                    }
-                });
+            boolean h1Stop = s.minutesLeftH1 <= 0;
+            boolean h2Stop = s.minutesLeftH2 <= 0;
+            if (h1Stop && h2Stop) {
+                continue;
             }
 
-            // remove zero nodes
-            val toRemove = nodes.entrySet().stream().filter(e -> e.getValue() == 0).map(Map.Entry::getKey)
-                    .collect(Collectors.toSet());
-            toRemove.forEach(this::removeNode);
-            // merge new edges into edges
-            newEdges.forEach(
-                    (from, toMap) -> toMap.forEach((to, distance) -> this.addEdgeIfShorter(from, to, distance)));
-        }
+            int posFlowH1 = h1Stop ? 0 : s.minutesLeftH1 * graph.getNode(s.posH1);
+            int posFlowH2 = h2Stop ? 0 : s.minutesLeftH2 * graph.getNode(s.posH2);
+            int totalFlow = s.flow + posFlowH1 + posFlowH2;
+            var h1Children = h1Stop ? List.of(s.posH1) : graph.children(s.posH1);
+            var h2Children = h2Stop ? List.of(s.posH2) : graph.children(s.posH2);
 
-        @FunctionalInterface
-        private interface DfsCallback {
-            void apply(String id, int depth);
-        }
-
-        void minDepthFrom(String from, DfsCallback callback) {
-            val visited = new HashSet<String>();
-            visited.add(from);
-
-            Set<String> current = new HashSet<String>();
-            current.add(from);
-
-            var depth = 1;
-
-            while (!current.isEmpty()) {
-                val allChildren = current.stream().flatMap(id -> this.children(id).stream())
-                        .filter(Predicate.not(visited::contains)).collect(Collectors.toSet());
-                for (val id : allChildren) {
-                    visited.add(id);
-                    callback.apply(id, depth);
-                }
-                current = allChildren;
-                depth++;
-            }
-        }
-
-        public int findMaxFlow(int distance, int depth, Set<String> visited, String pos) {
-            if (distance + depth > this.searchTime) {
-                return 0;
-            }
-            val v = new HashSet<String>(visited);
-            v.add(pos);
-
-            int posFlow = (this.searchTime - distance - depth) * nodeFlowRate(pos);
-            val c = this.children(pos).stream().filter(Predicate.not(v::contains)).collect(Collectors.toSet());
-            if (c.isEmpty()) {
-                return posFlow;
-            }
-
-            var maxFlow = 0;
-            for (val child : c) {
-                val flow = posFlow + findMaxFlow(distance + edgeWeight(pos, child), depth + 1, v, child);
-                maxFlow = Math.max(maxFlow, flow);
-            }
-            return maxFlow;
-        }
-
-        // same logic as above, except we have 2 heads that share a "visit" history
-        public int findMaxFlow2Headed(int distance1, int distance2, int depth, Set<String> visited, String pos1,
-                String pos2) {
-            // one of the heads is done, it's an invalid combination
-            if (distance1 + depth > this.searchTime) {
-                return findMaxFlow(distance2, depth, visited, pos2);
-            } else if (distance2 + depth > this.searchTime) {
-                return findMaxFlow(distance1, depth, visited, pos1);
-            }
-
-            val v = new HashSet<String>(visited);
-            v.add(pos1);
-            v.add(pos2);
-            int posFlow1 = (this.searchTime - distance1 - depth) * nodeFlowRate(pos1);
-            int posFlow2 = (this.searchTime - distance2 - depth) * nodeFlowRate(pos2);
-
-            val c1 = this.children(pos1).stream().filter(Predicate.not(v::contains)).collect(Collectors.toSet());
-            val c2 = this.children(pos2).stream().filter(Predicate.not(v::contains)).collect(Collectors.toSet());
-
-            if (c1.isEmpty()) {
-                return posFlow1 + findMaxFlow(distance2, depth, v, pos2);
-            } else if (c2.isEmpty()) {
-                return posFlow2 + findMaxFlow(distance1, depth, v, pos1);
-            }
-
-            var maxFlow = 0;
-            // hopefully that is not too much
-            for (val cc1 : c1) {
-                for (val cc2 : c2) {
-                    if (cc1.compareTo(cc2) == 0) {
+            for (val cH1 : h1Children) {
+                for (val cH2 : h2Children) {
+                    if (cH1.equals(cH2) || s.visited.contains(cH1) || s.visited.contains(cH2) || cH1.equals(s.posH1)
+                            || cH2.equals(s.posH2)) {
                         continue;
                     }
-                    val flow = posFlow1 + posFlow2 + findMaxFlow2Headed(
-                            distance1 + edgeWeight(pos1, cc1),
-                            distance2 + edgeWeight(pos2, cc2),
-                            depth + 1, v, cc1, cc2);
-                    maxFlow = Math.max(maxFlow, flow);
+                    val visited = new HashSet<>(s.visited);
+                    visited.add(s.posH1);
+                    visited.add(s.posH2);
+                    val h1MinutesLeft = s.minutesLeftH1 - graph.edgeCost(s.posH1, cH1) - 1 /* open time */;
+                    val h2MinutesLeft = s.minutesLeftH2 - graph.edgeCost(s.posH2, cH2) - 1 /* open time */;
+                    sDeque.add(new State2Head(visited, h1MinutesLeft, cH1, h2MinutesLeft, cH2, totalFlow));
                 }
             }
-            return maxFlow;
+
+            maxFlow = Math.max(maxFlow, totalFlow);
         }
+
+        return maxFlow;
+    }
+
+    /**
+     * Transform a large graph into a smaller one by removing zero nodes
+     * and adding edges where the edge value is the time to travel to this edge
+     */
+    private void compressGraph(DirectedWeightedGraph<Integer> graph) {
+        // for each non zero nodes
+        val nonZero = graph.getNodes().entrySet().stream().filter(e -> e.getValue() != 0).map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
+        Map<String, Map<String, Integer>> newEdges = new HashMap<>();
+
+        // find the distance to other nonZero nodes
+        for (val id : nonZero) {
+            val shortestPathsLength = graph.allShortestPathLengthFrom(id);
+            for (val entry : shortestPathsLength.entrySet()) {
+                val toId = entry.getKey();
+                if (nonZero.contains(toId) && !id.equals(toId)) {
+                    newEdges.computeIfAbsent(id, k -> new HashMap<>()).put(toId, shortestPathsLength.get(toId));
+                }
+            }
+        }
+
+        // remove zero nodes
+        val toRemove = graph.getNodes().entrySet().stream().filter(e -> e.getValue() == 0).map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        toRemove.forEach(graph::removeNode);
+        // merge new edges into edges
+        newEdges.forEach((from, toMap) -> toMap.forEach((to, distance) -> graph.addEdge(from, to, distance)));
     }
 
     private final static Pattern INPUT_PATTERN = Pattern
             .compile("Valve (\\w+) has flow rate=(\\d+); tunnels? leads? to valves? ([A-Z, ]+)");
 
-    private Graph parseInput(String inputFilePath) throws IOException {
-        var g = new Graph();
+    private DirectedWeightedGraph<Integer> parseInput(String inputFilePath) throws IOException {
+        val g = new DirectedWeightedGraph<Integer>();
         fileReader.readAllLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
