@@ -1,10 +1,10 @@
 package com.prevostc.adventofcode;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -12,33 +12,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.prevostc.utils.BigInt;
 import com.prevostc.utils.DirectedWeightedGraph;
 import com.prevostc.utils.FileReader;
 
 import lombok.val;
 
 public class Day16 {
+    private static final String startNode = "AA";
 
     FileReader fileReader = new FileReader();
+    Set<State1Head> stateCache1Head = new HashSet<>();
+    Set<State2Head> stateCache2Head = new HashSet<>();
+    DirectedWeightedGraph<Integer> graph;
 
     private record State1Head(Set<String> visited, int minutesLeft, String pos, int flow) {
     }
 
     public Integer part1(String inputFilePath) throws IOException {
-        val graph = parseInput(inputFilePath);
-
-        // AA always has flow rate 0 so it will be compressed out
-        // set it to 1 so we can start from it
-        graph.addNode("AA", 1);
-        this.compressGraph(graph);
-        graph.addNode("AA", 0);
-
-        return solve1head(graph, new State1Head(Set.of("AA"), 30, "AA", 0));
+        init(inputFilePath);
+        return solve1head(graph, new State1Head(Set.of(startNode), 30, startNode, 0));
     }
 
     private int solve1head(DirectedWeightedGraph<Integer> graph, State1Head initialState) {
 
-        Set<State1Head> stateCache = new HashSet<>();
         val sDeque = new ArrayDeque<State1Head>();
         sDeque.add(initialState);
 
@@ -46,10 +43,10 @@ public class Day16 {
         while (!sDeque.isEmpty()) {
             val s = sDeque.pop();
 
-            if (stateCache.contains(s)) {
+            if (stateCache1Head.contains(s)) {
                 continue;
             }
-            stateCache.add(s);
+            stateCache1Head.add(s);
 
             if (s.minutesLeft <= 0) {
                 continue;
@@ -79,10 +76,10 @@ public class Day16 {
 
         public State2Head simplify() {
             if (minutesLeftH1 <= 0) {
-                return new State2Head(visited, 0, "AA", minutesLeftH2, posH2, flow);
+                return new State2Head(visited, 0, startNode, minutesLeftH2, posH2, flow);
             }
             if (minutesLeftH2 <= 0) {
-                return new State2Head(visited, 0, "AA", minutesLeftH1, posH1, flow);
+                return new State2Head(visited, 0, startNode, minutesLeftH1, posH1, flow);
             }
             return this;
         }
@@ -90,31 +87,21 @@ public class Day16 {
     }
 
     public Integer part2(String inputFilePath) throws IOException {
-        val graph = parseInput(inputFilePath);
-        val startPos = "AA";
-        // AA always has flow rate 0 so it will be compressed out
-        // set it to 1 so we can start from it
-        graph.addNode(startPos, 1);
-        this.compressGraph(graph);
-        graph.addNode(startPos, 0);
+        init(inputFilePath);
 
-        Set<State2Head> stateCache = new HashSet<>();
         val sDeque = new ArrayDeque<State2Head>();
 
         int time = 26;
-        sDeque.add(new State2Head(Set.of(startPos), time, startPos, time, startPos, 0));
+        sDeque.add(new State2Head(Set.of(startNode), time, startNode, time, startNode, 0));
 
         int maxFlow = 0;
         while (!sDeque.isEmpty()) {
             val s = sDeque.removeLast().simplify();
 
-            if (stateCache.contains(s)) {
+            if (stateCache2Head.contains(s)) {
                 continue;
             }
-            stateCache.add(s);
-
-            // System.out.println(sDeque.size());
-            // System.out.println(s.visited + " " + s.posH1 + " " + s.posH2);
+            stateCache2Head.add(s);
 
             val visited = new HashSet<>(s.visited);
             visited.add(s.posH1);
@@ -132,25 +119,23 @@ public class Day16 {
 
                 // test if we have enough time left to beat our current score
                 int maxMinutesLeft = Math.max(s.minutesLeftH1, s.minutesLeftH2);
-                int totalFlowLeft = graph.getNodes().keySet().stream().filter(n -> !visited.contains(n))
-                        .mapToInt(n -> (maxMinutesLeft - 1) * graph.getNode(n)).sum();
+                int totalFlowLeft = 0;
+                for (val node : graph.getNodes().keySet()) {
+                    if (!visited.contains(node)) {
+                        totalFlowLeft += (maxMinutesLeft - 1) * graph.getNode(node);
+                    }
+                }
                 if (totalFlow + totalFlowLeft < maxFlow) {
                     continue;
                 }
-
-                val h1Children = graph.children(s.posH1).stream()
-                        .filter(c -> !visited.contains(c))
-                        .filter(c -> !c.equals(s.posH2) && !c.equals(s.posH1))
-                        .sorted((a, b) -> graph.getNode(b) - graph.getNode(a)) // order by flow rate
-                        .collect(Collectors.toList());
-                val h2Children = graph.children(s.posH2).stream()
-                        .filter(c -> !visited.contains(c))
-                        .filter(c -> !c.equals(s.posH2) && !c.equals(s.posH1)) // order by flow rate
-                        .sorted((a, b) -> graph.getNode(b) - graph.getNode(a))
-                        .collect(Collectors.toList());
-
-                for (val cH1 : h1Children) {
-                    for (val cH2 : h2Children) {
+                for (val cH1 : graph.children(s.posH1)) {
+                    if (s.visited.contains(cH1) || cH1.equals(s.posH1) || cH1.equals(s.posH2)) {
+                        continue;
+                    }
+                    for (val cH2 : graph.children(s.posH2)) {
+                        if (s.visited.contains(cH2) || cH2.equals(s.posH1) || cH2.equals(s.posH2)) {
+                            continue;
+                        }
                         if (cH1.equals(cH2)) {
                             continue;
                         }
@@ -211,20 +196,29 @@ public class Day16 {
     private final static Pattern INPUT_PATTERN = Pattern
             .compile("Valve (\\w+) has flow rate=(\\d+); tunnels? leads? to valves? ([A-Z, ]+)");
 
-    private DirectedWeightedGraph<Integer> parseInput(String inputFilePath) throws IOException {
-        val g = new DirectedWeightedGraph<Integer>();
+    private void init(String inputFilePath) throws IOException {
+        this.graph = new DirectedWeightedGraph<>();
         fileReader.readAllLines(inputFilePath).stream().filter(Predicate.not(String::isEmpty))
                 .map(INPUT_PATTERN::matcher)
                 .filter(Matcher::matches)
                 .forEach(m -> {
                     var id = m.group(1);
                     var flowRate = Integer.parseInt(m.group(2));
-                    g.addNode(id, flowRate);
+                    graph.addNode(id, flowRate);
                     var tos = m.group(3).split(", ");
                     for (var to : tos) {
-                        g.addEdge(id, to, 1);
+                        graph.addEdge(id, to, 1);
                     }
                 });
-        return g;
+
+        // AA always has flow rate 0 so it will be compressed out
+        // set it to 1 so we can start from it
+        graph.addNode(startNode, 1);
+        this.compressGraph(graph);
+        graph.addNode(startNode, 0);
+
+        // remove edged going to AA so we don't consider getting back to it
+        graph.removeIncidentEdges(startNode);
+
     }
 }

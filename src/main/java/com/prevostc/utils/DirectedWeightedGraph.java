@@ -14,6 +14,8 @@ public class DirectedWeightedGraph<TNodeData> {
 
     @Getter
     private Map<String, TNodeData> nodes; // id to flow rate map
+
+    @Getter
     private Map<String, Map<String, Integer>> edges; // "from" to "to" to "distance" map
 
     public DirectedWeightedGraph() {
@@ -31,6 +33,14 @@ public class DirectedWeightedGraph<TNodeData> {
 
     public void addEdge(String from, String to, Integer distance) {
         edges.computeIfAbsent(from, k -> new HashMap<>()).put(to, distance);
+    }
+
+    public void removeIncidentEdges(String to) {
+        edges.values().forEach(m -> m.remove(to));
+    }
+
+    public void removeEdge(String from, String to) {
+        edges.get(from).remove(to);
     }
 
     public Integer edgeCost(String from, String to) {

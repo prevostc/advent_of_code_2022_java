@@ -1,9 +1,8 @@
 package com.prevostc.utils;
 
 import lombok.Getter;
-import lombok.val;
 
-public class Grid2d<T> {
+public class Grid2d<T extends Object> {
     @Getter
     private int width;
     @Getter

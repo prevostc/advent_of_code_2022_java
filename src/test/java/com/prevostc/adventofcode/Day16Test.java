@@ -26,14 +26,14 @@ public class Day16Test {
     }
 
     @Test
-    public void testPart2Example() throws IOException {
+    public void testPart2Example() throws Exception {
         val day = new Day16();
         val answer = day.part2("day16/example.txt");
         assertEquals(1707, answer);
     }
 
     @Test
-    public void testPart2Main() throws IOException {
+    public void testPart2Main() throws Exception {
         val day = new Day16();
         val answer = day.part2("day16/input.txt");
         assertEquals(2474, answer);
